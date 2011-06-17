@@ -82,6 +82,8 @@ turn ReadStep()
 	}
 	ans.m_card = StringToCards(s);
 	CommitState(m_opponent, ans);
+
+	return ans;
 }
 
 void WriteStep(turn t)
@@ -104,23 +106,30 @@ void Init()
 {
 }
 
-turn Logic()
-{
-}
+//turn Logic()
+//{
+//}
 
 int main(int argc, char* argv[])
 {
-	if (argc!=2)
+	if (argc != 2)
 		return 1;
+
 	Init();
+
 	turn CurrentTurn;
-	if (atoi(argv[1])==1)
+	CurrentTurn.m_choice = ctos;
+	CurrentTurn.m_slot = 0;
+	CurrentTurn.m_card = inc;
+
+	if (atoi(argv[1]) == 1)
 	{
 		CurrentTurn = ReadStep();
 	}
+
 	while (true)
 	{
-		CurrentTurn = Logic();
+		//CurrentTurn = Logic();
 		WriteStep(CurrentTurn);
 		CurrentTurn = ReadStep();
 	}
