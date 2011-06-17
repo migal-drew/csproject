@@ -41,9 +41,25 @@ struct turn
 /*GLOBAL VARIABLES*/
 
 slot m_opponent[256], m_proponent[256];
-void(*functions)(field* args[3])[15];
+
+void(*m_functions)(field* args[3])[15];
+bool *m_args[15][3];
 
 /*FUNCTIONS*/
+
+cards StringToCards(char* s);
+char* CardsToString(cards card);
+field* InitField(cards card);
+void DeleteFieldArgs(field* f);
+void DeleteField(field* f);
+bool Execute(cards card, field* args[3]);
+void Calculate(field* f);
+void CommitState(slot slots[], turn t);
+turn ReadStep();
+void WriteStep(turn t);
+void InitSlot(slot &s);
+void Init();
+turn Logic();
 
 cards StringToCards(char* s)
 {
@@ -69,10 +85,37 @@ field* InitField(cards card)
 	return f;
 }
 
-
-void Execute(cards card, field* args[3])
+void DeleteFieldArgs(field* f)
 {
-	functions[card](args);
+	if (f == NULL)
+		return;
+	for (int i = 0; i < 3; i++)
+		DeleteField(f -> m_args[i]);
+}
+
+void DeleteField(field* f)
+{
+	DeleteFieldArgs(f);
+	delete f;
+}
+
+bool Execute(cards card, field* args[3])
+{
+	for (int i = 0; i < 3; i++)
+	{
+		if (m_args[card][i] != NULL && args[i] != NULL)
+		{
+			if ((*m_args[card][i]) != args[i] -> m_keyIsFunction)
+				return false;
+		}
+		else
+		{
+			if (m_args != NULL || m_args != NULL) 
+				return false;
+		}
+	}
+	m_functions[card](args);
+	return true;
 }
 
 void Calculate(field* f)
@@ -83,7 +126,10 @@ void Calculate(field* f)
 		if (f.m_keyIsFunction)
 		{
 			Calculate(f -> m_args[i]);
-			Execute(f -> m_function, m_args);
+			if (Execute(f -> m_function, m_args))
+			{
+				DeleteFieldArgs(f);
+			}
 		}
 	}
 }
@@ -144,8 +190,20 @@ void WriteStep(turn t)
 	CommitState(m_proponent, t);
 }
 
+void InitSlot(slot &s)
+{
+	s.m_isAlive = true;
+	s.m_vitality = 10000;
+	s.m_field = InitField(I);
+}
+
 void Init()
 {
+	for (int i = 0; i < 256; i++)
+	{
+		InitSlot(m_opponent[i]);
+		InitSlot(m_proponent[i]);
+	}
 }
 
 turn Logic()
