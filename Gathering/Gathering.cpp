@@ -28,7 +28,7 @@ struct slot
 {
 	bool m_isAlive;
 	unsigned int m_vitality;
-	field m_field;
+	field* m_field;
 };
 
 struct turn
@@ -58,9 +58,42 @@ char* CardsToString(cards card)
 	return CARDS_NAME[card];
 }
 
+field* InitField(cards card)
+{
+	field* f = new field;
+	f -> m_keyIsFunction = true;
+	f -> m_function = card;
+	for (int i = 0; i < 3; i++)
+		f -> m_args[i] = NULL;
+	return f;
+}
+
+void Calculate(field* f)
+{
+	int i = -1;
+	while (i < 2 && f -> m_args[++i] != NULL)
+	{
+		if (f.m_keyIsFunction)
+			Calculate(f -> m_args[i]);
+	}
+}
+
 void CommitState(slot slots[], turn t)
 {
-	
+	field* f = InitField(t.m_card)
+	if (t.m_choice == ctos)
+	{
+		f.m_args[0] = slots[t.m_slot].m_field;
+		slots[t.m_slot].m_field = f.m_args[0];
+	}
+	else
+	{
+		int i = -1;
+		while (i < 2 && slots[t.m_slot].m_field[++i] != NULL);
+		if (i < 3)
+			slots[t.m_slot].m_field[i] = f;
+	}
+	Calculate(&slots[t.m_slot].m_field);
 }
 
 turn ReadStep()
@@ -82,6 +115,7 @@ turn ReadStep()
 	}
 	ans.m_card = StringToCards(s);
 	CommitState(m_opponent, ans);
+	return ans;
 }
 
 void WriteStep(turn t)
