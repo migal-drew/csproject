@@ -41,6 +41,7 @@ struct turn
 /*GLOBAL VARIABLES*/
 
 slot m_opponent[256], m_proponent[256];
+void(*functions)(field* args[3])[15];
 
 /*FUNCTIONS*/
 
@@ -68,13 +69,22 @@ field* InitField(cards card)
 	return f;
 }
 
+
+void Execute(cards card, field* args[3])
+{
+	functions[card](args);
+}
+
 void Calculate(field* f)
 {
 	int i = -1;
 	while (i < 2 && f -> m_args[++i] != NULL)
 	{
 		if (f.m_keyIsFunction)
+		{
 			Calculate(f -> m_args[i]);
+			Execute(f -> m_function, m_args);
+		}
 	}
 }
 
