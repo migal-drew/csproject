@@ -144,7 +144,7 @@ void Calculate(field* f)
 			Calculate(f -> m_args[i]);
 			field* newF = Execute(f -> m_function, f -> m_args);
 			//if f==NULL then we can't execute;
-			if (f != NULL)
+			if (newF != NULL)
 			{
 				DeleteField(f);
 				f = newF;
@@ -226,80 +226,80 @@ void Init()
 	}
 	//Init card functions
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[0] = func_I;
+	argsType[0][1] = any;
+	argsType[0][2] = none;
+	argsType[0][3] = none;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[1] = func_zero;
+	argsType[1][1] = none;
+	argsType[1][2] = none;
+	argsType[1][3] = none;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[2] = func_succ;
+	argsType[2][1] = var;
+	argsType[2][2] = none;
+	argsType[2][3] = none;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[3] = func_dbl;
+	argsType[3][1] = var;
+	argsType[3][2] = none;
+	argsType[3][3] = none;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[4] = func_get;
+	argsType[4][1] = var;
+	argsType[4][2] = none;
+	argsType[4][3] = none;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[5] = func_put;
+	argsType[5][1] = any;
+	argsType[5][2] = none;
+	argsType[5][3] = none;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[6] = func_S;
+	argsType[6][1] = func;
+	argsType[6][2] = func;
+	argsType[6][3] = var;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[7] = func_K;
+	argsType[7][1] = any;
+	argsType[7][2] = any;
+	argsType[7][3] = none;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[8] = func_inc;
+	argsType[8][1] = var;
+	argsType[8][2] = none;
+	argsType[8][3] = none;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[9] = func_dec;
+	argsType[9][1] = var;
+	argsType[9][2] = none;
+	argsType[9][3] = none;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[10] = func_attack;
+	argsType[10][1] = var;
+	argsType[10][2] = var;
+	argsType[10][3] = var;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[11] = func_help;
+	argsType[11][1] = var;
+	argsType[11][2] = var;
+	argsType[11][3] = var;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[12] = func_copy;
+	argsType[12][1] = var;
+	argsType[12][2] = none;
+	argsType[12][3] = none;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[13] = func_revive;
+	argsType[13][1] = var;
+	argsType[13][2] = none;
+	argsType[13][3] = none;
 	/////////////////////
-	functions[] = func_;
-	argsType[][1] = ;
-	argsType[][2] = ;
-	argsType[][3] = ;
+	functions[14] = func_zombie;
+	argsType[14][1] = var;
+	argsType[14][2] = any;
+	argsType[14][3] = none;
 	/////////////////////
 }
 
