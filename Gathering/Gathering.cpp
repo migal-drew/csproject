@@ -220,13 +220,21 @@ field* Execute(cards card, field* args[3])
 {
 	for (int i = 0; i < 3; i++)
 	{
-		if (!(
-		(argsType[card][i] == none && args[i] == NULL) || 
-		(args[i] != NULL && (
-			(argsType[card][i] == any) ||
-			(argsType[card][i] == func && args[i] -> m_keyIsFunction) || 
-			(argsType[card][i] == var && !args[i] -> m_keyIsFunction)))))
+		if (args[i] == NULL && argsTipe[card][i] != none)
 			return NULL;
+		if (!(
+				(argsType[card][i] == none && args[i] == NULL) || 
+				(args[i] != NULL && (
+									(argsType[card][i] == any) ||
+									(argsType[card][i] == func && args[i] -> m_keyIsFunction) || 
+									(argsType[card][i] == var && !args[i] -> m_keyIsFunction)
+									)
+				)
+			))
+			{
+				//raice error becouse type of args don't ok
+				return NULL;
+			}
 	}
 	return functions[card](args);
 }
