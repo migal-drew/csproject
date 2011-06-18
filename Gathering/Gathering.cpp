@@ -13,6 +13,8 @@ enum cards {I, zero, succ, dbl, get, put, S, K, inc, dec, attack, help, copy, re
 
 enum choice {ctos = 1, stoc = 2}; //ctos == Card to slot. stoc == Slot to card
 
+enum argType {none, func, var, any};
+
 struct field
 {
 	bool m_keyIsFunction;
@@ -40,10 +42,28 @@ struct turn
 
 /*GLOBAL VARIABLES*/
 
-slot m_opponent[256], m_proponent[256];
+slot opponent[256], proponent[256];
 
-void(*m_functions)(field* args[3])[15];
-bool *m_args[15][3];
+field* (*functions[15])(field* args[3]);
+argType argsType[15][3];
+
+/*CARDS FUNCTION*/
+
+field* func_I(field* args[3]);
+field* func_zero(field* args[3]);
+field* func_succ(field* args[3]);
+field* func_dbl(field* args[3]);
+field* func_get(field* args[3]);
+field* func_put(field* args[3]);
+field* func_S(field* args[3]);
+field* func_K(field* args[3]);
+field* func_inc(field* args[3]);
+field* func_dec(field* args[3]);
+field* func_attack(field* args[3]);
+field* func_help(field* args[3]);
+field* func_copy(field* args[3]);
+field* func_revive(field* args[3]);
+field* func_zombie(field* args[3]);
 
 /*FUNCTIONS*/
 
@@ -99,23 +119,19 @@ void DeleteField(field* f)
 	delete f;
 }
 
-bool Execute(cards card, field* args[3])
+field* Execute(cards card, field* args[3])
 {
 	for (int i = 0; i < 3; i++)
 	{
-		if (m_args[card][i] != NULL && args[i] != NULL)
-		{
-			if ((*m_args[card][i]) != args[i] -> m_keyIsFunction)
-				return false;
-		}
-		else
-		{
-			if (m_args != NULL || m_args != NULL) 
-				return false;
-		}
+		if (!(
+		(argsType[card][i] == none && args[i] == NULL) || 
+		(args[i] != NULL && (
+			(argsType[card][i] == any) ||
+			(argsType[card][i] == func && args[i] -> m_keyIsFunction) || 
+			(argsType[card][i] == var && !args[i] -> m_keyIsFunction)))))
+			return NULL;
 	}
-	m_functions[card](args);
-	return true;
+	return functions[card](args);
 }
 
 void Calculate(field* f)
@@ -123,12 +139,15 @@ void Calculate(field* f)
 	int i = -1;
 	while (i < 2 && f -> m_args[++i] != NULL)
 	{
-		if (f.m_keyIsFunction)
+		if (f->m_keyIsFunction)
 		{
 			Calculate(f -> m_args[i]);
-			if (Execute(f -> m_function, m_args))
+			field* newF = Execute(f -> m_function, f -> m_args);
+			//if f==NULL then we can't execute;
+			if (f != NULL)
 			{
-				DeleteFieldArgs(f);
+				DeleteField(f);
+				f = newF;
 			}
 		}
 	}
@@ -136,20 +155,20 @@ void Calculate(field* f)
 
 void CommitState(slot slots[], turn t)
 {
-	field* f = InitField(t.m_card)
+	field* f = InitField(t.m_card);
 	if (t.m_choice == ctos)
 	{
-		f.m_args[0] = slots[t.m_slot].m_field;
-		slots[t.m_slot].m_field = f.m_args[0];
+		f -> m_args[0] = slots[t.m_slot].m_field;
+		slots[t.m_slot].m_field = f -> m_args[0];
 	}
 	else
 	{
 		int i = -1;
-		while (i < 2 && slots[t.m_slot].m_field[++i] != NULL);
+		while (i < 2 && slots[t.m_slot].m_field -> m_args[++i] != NULL);
 		if (i < 3)
-			slots[t.m_slot].m_field[i] = f;
+			slots[t.m_slot].m_field[i].m_args[i] = f;
 	}
-	Calculate(&slots[t.m_slot].m_field);
+	Calculate(slots[t.m_slot].m_field);
 }
 
 turn ReadStep()
@@ -170,7 +189,7 @@ turn ReadStep()
 		cin>>s;
 	}
 	ans.m_card = StringToCards(s);
-	CommitState(m_opponent, ans);
+	CommitState(opponent, ans);
 	return ans;
 }
 
@@ -187,7 +206,7 @@ void WriteStep(turn t)
 		cout<<t.m_slot<<"\n";
 		cout<<CardsToString(t.m_card)<<"\n";
 	}
-	CommitState(m_proponent, t);
+	CommitState(proponent, t);
 }
 
 void InitSlot(slot &s)
@@ -199,15 +218,94 @@ void InitSlot(slot &s)
 
 void Init()
 {
+	//Init all slots
 	for (int i = 0; i < 256; i++)
 	{
-		InitSlot(m_opponent[i]);
-		InitSlot(m_proponent[i]);
+		InitSlot(opponent[i]);
+		InitSlot(proponent[i]);
 	}
+	//Init card functions
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
+	functions[] = func_;
+	argsType[][1] = ;
+	argsType[][2] = ;
+	argsType[][3] = ;
+	/////////////////////
 }
 
 turn Logic()
 {
+
 }
 
 int main(int argc, char* argv[])
