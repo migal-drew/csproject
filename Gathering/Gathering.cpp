@@ -1,6 +1,7 @@
 // Gathering.cpp : Defines the entry point for the console application.
 //
 #include <iostream>
+#include <sting.h>
 using namespace std;
 
 /*CONSTANTS*/
@@ -14,6 +15,8 @@ enum cards {I, zero, succ, dbl, get, put, S, K, inc, dec, attack, help, copy, re
 enum choice {ctos = 1, stoc = 2}; //ctos == Card to slot. stoc == Slot to card
 
 enum argType {none, func, var, any};
+
+struct slot;
 
 struct field
 {
@@ -45,7 +48,7 @@ struct turnQueue
 	int m_size;
 	turn* m_Begin;
 	turn* m_End;
-}
+};
 
 /*GLOBAL VARIABLES*/
 
@@ -54,10 +57,9 @@ slot opponent[256], proponent[256];
 field* (*functions[15])(field* args[3]);
 argType argsType[15][3];
 
-bool (*strategy)(int turnCount, int stepNumber, void* anotherArgs[]);
-
 int TurnNumber, StepNumber;
 
+turnQueue mainQueue;
 
 /*CARDS FUNCTION*/
 
@@ -177,7 +179,7 @@ void Calculate(field* f)
 
 void CommitState(slot slots[], turn t)
 {
-	field* f = InitField(t.m_card, &slot[t.m_slot]);
+	field* f = InitField(t.m_card, &slots[t.m_slot]);
 	if (t.m_choice == ctos)
 	{
 		f -> m_args[0] = slots[t.m_slot].m_field;
@@ -233,7 +235,6 @@ void WriteStep(turn t)
 
 void InitSlot(slot &s)
 {
-	s.m_isAlive = true;
 	s.m_vitality = 10000;
 	s.m_field = InitField(I, &s);
 }
@@ -323,17 +324,15 @@ void Init()
 	argsType[14][2] = any;
 	argsType[14][3] = none;
 	/////////////////////
-	strategy = NULL;
+	InitQueue(&mainQueue);
 	TurnNumber = 1;
 	StepNumber = 0;
 }
 
 turn Logic()
 {
-	if (strategy != NULL)
-	{
-		if strategy(TurnNumber, StepNumber, LastArgs)
-	}
+	//Here we change our main queue
+	return Pop(&mainQueue);
 }
 
 int main(int argc, char* argv[])
