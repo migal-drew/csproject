@@ -1,12 +1,12 @@
 // Gathering.cpp : Defines the entry point for the console application.
 //
 #include <iostream>
-#include <sting.h>
+#include <string.h>
 using namespace std;
 
 /*CONSTANTS*/
 
-const char CARDS_COUNT = 15;
+const short int CARDS_COUNT = 15;
 char* CARDS_NAME[CARDS_COUNT] = {"I", "zero", "succ", "dbl", "get", "put", "S", "K", "inc", "dec", "attack", "help", "copy", "revive", "zombie"};
 
 /*TYPES*/
@@ -40,14 +40,20 @@ struct turn
 {
 	choice m_choice;
 	cards m_card;
-	unsigned char m_slot;
+	short int m_slot;
+};
+
+struct queueItem
+{
+	turn m_value;
+	queueItem* m_next;
 };
 
 struct turnQueue
 {
 	int m_size;
-	turn* m_Begin;
-	turn* m_End;
+	queueItem* m_Begin;
+	queueItem* m_End;
 };
 
 /*GLOBAL VARIABLES*/
@@ -61,6 +67,8 @@ int TurnNumber, StepNumber;
 
 turnQueue mainQueue;
 
+//----------------------------------------------------------------------------------
+//FUNCTION'S INTERFACES
 /*CARDS FUNCTION*/
 
 field* func_I(field* args[3]);
@@ -81,12 +89,11 @@ field* func_zombie(field* args[3]);
 
 /*QUEUE FUNCTIONS*/
 
-void InitQueue(turnQueue* q);
-void Push(turnQueue* q, turn t);
-turn Pop(turnQueue* q);
-void DestroyQueue(turnQueue* q);
-void ClearQueue(turnQueue* q);
-void AddQueueuToQueue(turnQueue* source, turnQueue* destination);  //while(source.m_size > 0) push(destination, pop(source));
+void InitQueue(turnQueue &q);
+void Push(turnQueue &q, turn t);
+turn Pop(turnQueue &q);
+void ClearQueue(turnQueue &q);
+void AddQueueuToQueue(turnQueue &source, turnQueue &destination);  //while(source.m_size > 0) push(destination, pop(source));
 
 /*FUNCTIONS*/
 
@@ -103,6 +110,72 @@ void WriteStep(turn t);
 void InitSlot(slot &s);
 void Init();
 turn Logic();
+
+//---------------------------------------------------------------------------------
+//FUNCTION'S IMPLEMENTATIONS
+/*QUEUE FUNCTIONS*/
+
+void InitQueue(turnQueue &q)
+{
+	q.m_size = 0;
+	q.m_Begin = NULL;
+	q.m_End = NULL;
+}
+
+void Push(turnQueue &q, turn t)
+{
+	queueItem *qi = new queueItem;
+	qi -> m_value = t;
+	qi -> m_next = NULL;
+	if (!q.m_size)
+	{
+		q.m_Begin = qi;
+	}
+	else
+	{
+		q.m_End -> m_next = qi;
+	}
+	q.m_End = qi;
+	q.m_size++;
+}
+
+turn Pop(turnQueue &q)
+{
+	turn ans;
+	if (!q.m_size)
+	{
+		ans.choice = ctos;
+		ans.m_card = I;
+		ans.m_slot = 0;
+	}
+	else
+	{
+		ans = q.m_Begin -> m_value;
+		queueItem *qi = q.m_Begin;
+		q.m_Begin = qi -> m_next;
+		q.m_size--;
+		delete qi;
+	}
+	return ans;
+}
+
+void ClearQueue(turnQueue &q)
+{
+	while (q.m_size)
+	{
+		Pop(q);
+	}
+}
+
+void AddQueueuToQueue(turnQueue &source, turnQueue &destination)
+{
+	while (source.m_size)
+	{
+		Push(destination, Pop(source));
+	}
+}
+
+/*FUNCTIONS*/
 
 cards StringToCards(char* s)
 {
@@ -166,14 +239,14 @@ void Calculate(field* f)
 		if (f->m_keyIsFunction)
 		{
 			Calculate(f -> m_args[i]);
-			field* newF = Execute(f -> m_function, f -> m_args);
-			//if f==NULL then we can't execute;
-			if (newF != NULL)
-			{
-				DeleteField(f);
-				f = newF;
-			}
 		}
+	}
+	field* newF = Execute(f -> m_function, f -> m_args);
+	//if f==NULL then we can't execute;
+	if (newF != NULL)
+	{
+		DeleteField(f);
+		f = newF;
 	}
 }
 
