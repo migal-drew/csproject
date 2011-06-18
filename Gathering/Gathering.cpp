@@ -29,8 +29,7 @@ struct field
 
 struct slot
 {
-	bool m_isAlive;
-	unsigned int m_vitality;
+	long m_vitality;
 	field* m_field;
 };
 
@@ -41,12 +40,24 @@ struct turn
 	unsigned char m_slot;
 };
 
+struct turnQueue
+{
+	int m_size;
+	turn* m_Begin;
+	turn* m_End;
+}
+
 /*GLOBAL VARIABLES*/
 
 slot opponent[256], proponent[256];
 
 field* (*functions[15])(field* args[3]);
 argType argsType[15][3];
+
+bool (*strategy)(int turnCount, int stepNumber, void* anotherArgs[]);
+
+int TurnNumber, StepNumber;
+
 
 /*CARDS FUNCTION*/
 
@@ -66,6 +77,15 @@ field* func_copy(field* args[3]);
 field* func_revive(field* args[3]);
 field* func_zombie(field* args[3]);
 
+/*QUEUE FUNCTIONS*/
+
+void InitQueue(turnQueue* q);
+void Push(turnQueue* q, turn t);
+turn Pop(turnQueue* q);
+void DestroyQueue(turnQueue* q);
+void ClearQueue(turnQueue* q);
+void AddQueueuToQueue(turnQueue* source, turnQueue* destination);  //while(source.m_size > 0) push(destination, pop(source));
+
 /*FUNCTIONS*/
 
 cards StringToCards(char* s);
@@ -73,7 +93,7 @@ char* CardsToString(cards card);
 field* InitField(cards card);
 void DeleteFieldArgs(field* f);
 void DeleteField(field* f);
-bool Execute(cards card, field* args[3]);
+field* Execute(cards card, field* args[3]);
 void Calculate(field* f);
 void CommitState(slot slots[], turn t);
 turn ReadStep();
@@ -103,7 +123,7 @@ field* InitField(cards card, slot *mainSlot)
 	f -> m_function = card;
 	for (int i = 0; i < 3; i++)
 		f -> m_args[i] = NULL;
-	f -> m_mainSLot = mainSlot;
+	f -> m_mainSlot = mainSlot;
 	return f;
 }
 
@@ -303,11 +323,17 @@ void Init()
 	argsType[14][2] = any;
 	argsType[14][3] = none;
 	/////////////////////
+	strategy = NULL;
+	TurnNumber = 1;
+	StepNumber = 0;
 }
 
 turn Logic()
 {
-
+	if (strategy != NULL)
+	{
+		if strategy(TurnNumber, StepNumber, LastArgs)
+	}
 }
 
 int main(int argc, char* argv[])
@@ -324,6 +350,7 @@ int main(int argc, char* argv[])
 	{
 		CurrentTurn = Logic();
 		WriteStep(CurrentTurn);
+		TurnNumber++;
 		CurrentTurn = ReadStep();
 	}
 	return 0;
