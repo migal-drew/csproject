@@ -24,6 +24,7 @@ struct field
 		cards m_function;
 	};
 	field* m_args[3];
+	slot* m_mainSlot;
 };
 
 struct slot
@@ -95,13 +96,14 @@ char* CardsToString(cards card)
 	return CARDS_NAME[card];
 }
 
-field* InitField(cards card)
+field* InitField(cards card, slot *mainSlot)
 {
 	field* f = new field;
 	f -> m_keyIsFunction = true;
 	f -> m_function = card;
 	for (int i = 0; i < 3; i++)
 		f -> m_args[i] = NULL;
+	f -> m_mainSLot = mainSlot;
 	return f;
 }
 
@@ -155,7 +157,7 @@ void Calculate(field* f)
 
 void CommitState(slot slots[], turn t)
 {
-	field* f = InitField(t.m_card);
+	field* f = InitField(t.m_card, &slot[t.m_slot]);
 	if (t.m_choice == ctos)
 	{
 		f -> m_args[0] = slots[t.m_slot].m_field;
@@ -213,7 +215,7 @@ void InitSlot(slot &s)
 {
 	s.m_isAlive = true;
 	s.m_vitality = 10000;
-	s.m_field = InitField(I);
+	s.m_field = InitField(I, &s);
 }
 
 void Init()
