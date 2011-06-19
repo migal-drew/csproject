@@ -1,13 +1,14 @@
 // Gathering.cpp : Defines the entry point for the console application.
 //
 #include <iostream>
-#include <sting.h>
+#include <string.h>
+
 using namespace std;
 
 /*CONSTANTS*/
-
 const char CARDS_COUNT = 15;
 char* CARDS_NAME[CARDS_COUNT] = {"I", "zero", "succ", "dbl", "get", "put", "S", "K", "inc", "dec", "attack", "help", "copy", "revive", "zombie"};
+/*END CONSTANTS*/
 
 /*TYPES*/
 enum cards {I, zero, succ, dbl, get, put, S, K, inc, dec, attack, help, copy, revive, zombie};
@@ -40,7 +41,7 @@ struct turn
 {
 	choice m_choice;
 	cards m_card;
-	unsigned char m_slot;
+	short int m_slot;
 };
 
 struct turnQueue
@@ -49,9 +50,13 @@ struct turnQueue
 	turn* m_Begin;
 	turn* m_End;
 };
+/*END TYPES*/
+
+/*ERROR IN CARD*/
+bool errorInCard;
+/*END ERROR IN CARD*/
 
 /*GLOBAL VARIABLES*/
-
 slot opponent[256], proponent[256];
 
 field* (*functions[15])(field* args[3]);
@@ -60,9 +65,9 @@ argType argsType[15][3];
 int TurnNumber, StepNumber;
 
 turnQueue mainQueue;
+/*END GLOBAL VARIABLES*/
 
 /*CARDS FUNCTION*/
-
 field* func_I(field* args[3]);
 field* func_zero(field* args[3]);
 field* func_succ(field* args[3]);
@@ -79,17 +84,345 @@ field* func_copy(field* args[3]);
 field* func_revive(field* args[3]);
 field* func_zombie(field* args[3]);
 
-/*QUEUE FUNCTIONS*/
+//Negative functions
+field* func_inc_negative(field* args[3]);
+field* func_dec_negative(field* args[3]);
+field* func_attack_negative(field* args[3]);
+field* func_help_negative(field* args[3]);
+//End Negative functions
+/*END CARDS FUNCTION*/
 
+field* CopyTree(field* f)
+{
+	if (f == NULL)
+		return NULL;
+
+	field* ans;
+
+	if (f->m_keyIsFunction)
+		ans = InitField(f->m_function, f->m_mainSlot);
+	else
+	{
+		ans = InitField(I, f->m_mainSlot);
+		ans->m_value = f->m_value;
+		ans->m_keyIsFunction = false;
+	}
+
+	for (int i = 0; i < 3; i++)
+		ans->m_args[i] = CopyTree(f->m_args[i]);
+
+	return ans;
+}
+
+/*IMPLEMENTATION OF CARD FUNCTIONS*/
+
+field* func_I(field* args[3])
+{
+	return CopyTree(args[0]);
+}
+
+field* func_zero(field* args[3])
+{
+	return InitField(0, NULL);
+}
+
+field* func_succ(field* args[3])
+{
+	if (args[0]->m_keyIsFunction)
+	{
+		errorInCard = true;
+		return NULL;
+	}
+
+	unsigned int value;
+	if (args[0]->m_value < 65535)
+		value = args[0]->m_value + 1;
+	else
+		value = args[0]->m_value;
+
+	return InitField(value, NULL);
+}
+
+field* func_dbl(field* args[3])
+{
+	if (args[0]->m_keyIsFunction)
+	{
+		errorInCard = true;
+		return NULL;
+	}
+
+	unsigned int value;
+	value = args[0]->m_value * 2;
+	if (value > 65535)
+		value = 65535;
+
+	return InitField(value, NULL);
+}
+
+field* func_get(field* args[3])
+{
+	if (args[0]->m_value < 0 || args[0]->m_value > 255 ||
+		proponent[args[0]->m_value].m_vitality <= 0)
+	{
+		errorInCard = true;
+		return NULL;
+	}
+
+	return CopyTree(proponent[args[0]->m_value].m_field);
+}
+
+field* func_put(field* args[3])
+{
+	return InitField(I, NULL);
+}
+
+field* func_S(field* args[3])
+{
+#warning !!!!!!!!!!!
+}
+
+field* func_K(field* args[3])
+{
+	return CopyTree(args[0]);
+}
+
+field* func_inc(field* args[3])
+{
+	if (args[0]->m_value < 0 || args[0]->m_value > 255)
+	{
+		errorInCard = true;
+		return;
+	}
+
+	long vitality = proponent[args[0]->m_value].m_vitality;
+	if (vitality > 0 && vitality < 65535)
+		proponent[args[0]->m_value].m_vitality++;
+
+	field* ans = InitField(I, args[0]->m_mainSlot);
+	return ans;
+}
+
+field* func_dec(field* args[3])
+{
+	if (args[0]->m_value < 0 || args[0]->m_value > 255)
+	{
+		errorInCard = true;
+		return;
+	}
+
+	if (opponent[255 - args[0]->m_value].m_vitality > 0)
+		opponent[255 - args[0]->m_value].m_vitality--;
+
+	field* ans = InitField(I, args[0]->m_mainSlot);
+	return ans;
+}
+
+field* func_attack(field* args[3])
+{
+	//Не делаем ничего и просто возвращаем IDENTITY, если слот мертв
+	if (proponent[args[0]->m_value].m_vitality <= 0)
+		return InitField(I, NULL);
+
+	//Ошибки в карте
+	if (args[0]->m_keyIsFunction ||
+		args[0]->m_value < 0 || args[0]->m_value > 255 ||
+		args[1]->m_value < 0 || args[1]->m_value > 255 ||
+		args[2]->m_keyIsFunction ||
+		args[2]->m_value > proponent[args[0]->m_value].m_vitality)
+	{
+		errorInCard = true;
+		return NULL;
+	}
+	//Количество очков, которое отнимается у атакующего слота
+	long n = args[2]->m_value;
+
+	proponent[args[0]->m_value].m_vitality -= n;
+
+	long oppVita = opponent[255 - args[1]->m_value].m_vitality;
+	oppVita = oppVita - n * 9 / 10;
+	if (oppVita < 0)
+		oppVita = 0;
+	opponent[255 - args[1]->m_value].m_vitality = oppVita;
+
+	return InitField(I, NULL);
+}
+
+field* func_help(field* args[3])
+{
+	if (proponent[args[0]->m_value].m_vitality <= 0)
+		return InitField(I, NULL);
+
+	if (args[0]->m_value < 0 || args[0]->m_value > 255 ||
+		args[1]->m_value < 0 || args[1]->m_value > 255 ||
+		args[2]->m_keyIsFunction ||
+		args[2]->m_value > proponent[args[0]->m_value].m_vitality)
+	{
+		errorInCard = true;
+		return NULL;
+	}
+
+	long n = args[2]->m_value;
+
+	proponent[args[0]->m_value].m_vitality -= n;
+
+	proponent[args[1]->m_value].m_vitality += n * 11 / 10;
+	if (proponent[args[1]->m_value].m_vitality > 65535)
+		proponent[args[1]->m_value].m_vitality = 65535;
+
+	return InitField(I, NULL);
+}
+
+field* func_copy(field* args[3])
+{
+	if (args[0]->m_keyIsFunction ||
+		args[0]->m_value < 0 || args[0]->m_value > 255)
+	{
+		errorInCard = true;
+		return NULL;
+	}
+
+	return CopyTree(opponent[args[0]->m_value].m_field);
+}
+
+field* func_revive(field* args[3])
+{
+	if (args[0]->m_keyIsFunction ||
+		args[0]->m_value < 0 || args[0]->m_value > 255)
+	{
+		errorInCard = true;
+		return NULL;
+	}
+
+	if (proponent[args[0]->m_value].m_vitality <= 0)
+		proponent[args[0]->m_value].m_vitality = 1;
+
+	return InitField(I, NULL);
+}
+
+field* func_zombie(field* args[3])
+{
+	if (args[0]->m_keyIsFunction ||
+		args[0]->m_value < 0 || args[0]->m_value > 255)
+	{
+		errorInCard = true;
+		return NULL;
+	}
+	if (opponent[args[0]->m_value].m_vitality > 0)
+	{
+		errorInCard = true;
+		return NULL;
+	} 
+
+	field* x;
+	*x = *args[1];
+
+	opponent[255 - args[0]->m_value].m_field = x;
+	opponent[255 - args[0]->m_value].m_vitality = -1;
+
+	return InitField(I, NULL);
+}
+
+//Implementation of negative functions
+field* func_inc_negative(field* args[3])
+{
+	if (args[0]->m_value < 0 || args[0]->m_value > 255)
+	{
+		errorInCard = true;
+		return;
+	}
+
+	long vitality = proponent[args[0]->m_value].m_vitality;
+	if (vitality > 0)
+		proponent[args[0]->m_value].m_vitality--;
+
+	return InitField(I, args[0]->m_mainSlot);
+}
+
+field* func_dec_negative(field* args[3])
+{
+	if (args[0]->m_value < 0 || args[0]->m_value > 255)
+	{
+		errorInCard = true;
+		return;
+	}
+
+	if (opponent[255 - args[0]->m_value].m_vitality > 0 &&
+		opponent[255 - args[0]->m_value].m_vitality < 65535)
+			opponent[255 - args[0]->m_value].m_vitality++;
+
+	return InitField(I, args[0]->m_mainSlot);
+}
+
+field* func_attack_negative(field* args[3])
+{
+	//Не делаем ничего и просто возвращаем IDENTITY, если слот мертв
+	if (proponent[args[0]->m_value].m_vitality <= 0)
+		return InitField(I, NULL);
+
+	//Ошибки в карте
+	if (args[0]->m_keyIsFunction ||
+		args[0]->m_value < 0 || args[0]->m_value > 255 ||
+		args[1]->m_value < 0 || args[1]->m_value > 255 ||
+		args[2]->m_keyIsFunction ||
+		args[2]->m_value > proponent[args[0]->m_value].m_vitality)
+	{
+		errorInCard = true;
+		return NULL;
+	}
+	//Количество очков, которое отнимается у атакующего слота
+	long n = args[2]->m_value;
+
+	proponent[args[0]->m_value].m_vitality -= n;
+
+	long oppVita = opponent[255 - args[1]->m_value].m_vitality;
+	oppVita = oppVita + n * 9 / 10;
+	if (oppVita > 65535)
+		oppVita = 65535;
+	opponent[255 - args[1]->m_value].m_vitality = oppVita;
+
+	return InitField(I, NULL);
+}
+
+field* func_help_negative(field* args[3])
+{
+	if (proponent[args[0]->m_value].m_vitality <= 0)
+		return InitField(I, NULL);
+
+	if (args[0]->m_value < 0 || args[0]->m_value > 255 ||
+		args[1]->m_value < 0 || args[1]->m_value > 255 ||
+		args[2]->m_keyIsFunction ||
+		args[2]->m_value > proponent[args[0]->m_value].m_vitality)
+	{
+		errorInCard = true;
+		return NULL;
+	}
+
+	long n = args[2]->m_value;
+
+	proponent[args[0]->m_value].m_vitality -= n;
+
+	if (proponent[args[1]->m_value].m_vitality > 0)
+	{
+		proponent[args[1]->m_value].m_vitality -= n * 11 / 10;
+		if (proponent[args[1]->m_value].m_vitality < 0)
+			proponent[args[1]->m_value].m_vitality = 0;
+	}
+
+	return InitField(I, NULL);
+}
+//End of Implementation of negative functions
+/*END IMPLEMENTATION OF CARD FUNCTIONS*/
+
+/*QUEUE FUNCTIONS*/
 void InitQueue(turnQueue* q);
 void Push(turnQueue* q, turn t);
 turn Pop(turnQueue* q);
 void DestroyQueue(turnQueue* q);
 void ClearQueue(turnQueue* q);
 void AddQueueuToQueue(turnQueue* source, turnQueue* destination);  //while(source.m_size > 0) push(destination, pop(source));
+/*END QUEUE FUNCTIONS*/
 
 /*FUNCTIONS*/
-
 cards StringToCards(char* s);
 char* CardsToString(cards card);
 field* InitField(cards card);
@@ -103,6 +436,7 @@ void WriteStep(turn t);
 void InitSlot(slot &s);
 void Init();
 turn Logic();
+/*END FUNCTIONS*/
 
 cards StringToCards(char* s)
 {
@@ -123,9 +457,22 @@ field* InitField(cards card, slot *mainSlot)
 	field* f = new field;
 	f -> m_keyIsFunction = true;
 	f -> m_function = card;
+	f -> m_mainSlot = mainSlot;
 	for (int i = 0; i < 3; i++)
 		f -> m_args[i] = NULL;
+
+	return f;
+}
+
+field* InitField(unsigned int value, slot* mainSlot)
+{
+	field* f = new field;
+	f->m_keyIsFunction = false;
+	f->m_value = value;
 	f -> m_mainSlot = mainSlot;
+	for (int i = 0; i < 3; i++)
+		f -> m_args[i] = NULL;
+
 	return f;
 }
 
@@ -170,6 +517,9 @@ void Calculate(field* f)
 			//if f==NULL then we can't execute;
 			if (newF != NULL)
 			{
+#warning !!! Ручками вставляем в field ссылку на слот
+				newF->m_mainSlot = f->m_mainSlot;
+
 				DeleteField(f);
 				f = newF;
 			}
